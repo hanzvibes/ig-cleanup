@@ -18,7 +18,7 @@ test("imports, filters, keeps, reviews, and persists Instagram data", async ({ p
   await expect(page.getByRole("status")).toContainText("Import complete");
   await expect(page.locator(".metricCard > strong")).toHaveText("2");
 
-  await page.getByRole("button", { name: "Following" }).click();
+  await page.getByRole("button", { name: "Following", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Following" })).toBeVisible();
 
   await page.getByRole("button", { name: "Not back" }).click();
@@ -35,7 +35,7 @@ test("imports, filters, keeps, reviews, and persists Instagram data", async ({ p
   await expect(page.locator(".accountRow").filter({ hasText: "alice" })).toBeVisible();
   await expect(page.locator(".accountRow").filter({ hasText: "charlie" })).toHaveCount(0);
 
-  await page.getByRole("button", { name: "Cleanup" }).click();
+  await page.getByRole("button", { name: "Cleanup", exact: true }).click();
   const charlieRow = page.locator(".accountRow").filter({ hasText: "charlie" });
   await charlieRow.getByRole("button", { name: "Review charlie" }).click();
 
@@ -52,12 +52,12 @@ test("imports, filters, keeps, reviews, and persists Instagram data", async ({ p
   await expect(page.locator(".accountRow").filter({ hasText: "charlie" })).toHaveCount(0);
   await expect(page.locator(".accountRow").filter({ hasText: "dana" })).toBeVisible();
 
-  await page.getByRole("button", { name: "Keep" }).click();
+  await page.getByRole("button", { name: "Keep", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Keep list" })).toBeVisible();
   await expect(page.locator(".accountRow").filter({ hasText: "charlie" })).toBeVisible();
 
   await page.reload();
   await expect(page.locator(".metricCard > strong")).toHaveText("1");
-  await page.getByRole("button", { name: "Keep" }).click();
+  await page.getByRole("button", { name: "Keep", exact: true }).click();
   await expect(page.locator(".accountRow").filter({ hasText: "charlie" })).toBeVisible();
 });
