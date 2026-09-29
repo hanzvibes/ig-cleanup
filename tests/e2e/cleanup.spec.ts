@@ -10,10 +10,10 @@ const fixtures = {
 test("imports, filters, keeps, reviews, and persists Instagram data", async ({ page }) => {
   await page.goto("/");
 
-  await page.locator('input[type="file"]').setInputFiles([
-    fixtures.followers,
-    fixtures.following,
-  ]);
+  const fileChooserPromise = page.waitForEvent("filechooser");
+  await page.getByRole("button", { name: "Import Instagram data" }).click();
+  const fileChooser = await fileChooserPromise;
+  await fileChooser.setFiles([fixtures.followers, fixtures.following]);
 
   await expect(page.getByRole("status")).toContainText("Import complete");
   await expect(page.locator(".metricCard > strong")).toHaveText("2");
