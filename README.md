@@ -1,38 +1,56 @@
 # IG Cleanup
 
-A mobile-first, local-first assistant for reviewing Instagram relationship data without relying on private Instagram APIs or automating follow/unfollow actions.
+A mobile-first, local-first assistant for reviewing Instagram relationship exports without relying on private Instagram APIs or automating follow/unfollow actions.
 
-## Product direction
+## What works now
 
-- Native-mobile interaction language inspired by modern social apps.
-- Import Instagram data exports and process them locally in the browser.
-- Review `Following`, `Followers`, `Mutual`, and `Not following back` groups.
-- Keep List for accounts the user wants to preserve.
-- Open an account in Instagram so the user can make the final unfollow decision themselves.
-- No Instagram password storage.
-- No browser automation, private endpoints, or unofficial unfollow API.
+- Import an Instagram export as ZIP, JSON, or HTML.
+- Parse segmented follower files such as `followers_1.json`, `followers_2.json`, and matching following files.
+- Compare Followers, Following, Mutual, and Not Following Back.
+- Search and filter the Following list.
+- Keep List for accounts that should stay out of the cleanup queue.
+- Native-feeling review bottom sheet.
+- Open a selected profile in Instagram for the final user-controlled action.
+- Persist the latest relationship snapshot and Keep List in browser storage when available.
+- Light/dark mode, reduced-motion support, safe-area spacing, and PWA metadata.
+
+The app does **not** store an Instagram password, call private relationship endpoints, or automate unfollow requests.
 
 ## Stack
 
 - Next.js App Router
 - React + TypeScript
-- CSS with system-native typography
-- PWA-ready manifest
-- Local-first data layer
+- JSZip for client-side ZIP parsing
+- Local browser storage
+- GitHub Actions CI
 - Vercel-friendly deployment
 
 ## Architecture
 
 ```text
 src/
-├─ app/                    # routes, global UI shell and metadata
-├─ components/             # shared visual components
-├─ features/
-│  └─ instagram-data/      # import/parse/compare domain logic
-└─ lib/                    # small shared utilities only
+├─ app/
+│  ├─ page.tsx
+│  ├─ layout.tsx
+│  └─ globals.css
+├─ components/
+│  ├─ cleanup-app.tsx
+│  ├─ home-view.tsx
+│  ├─ list-view.tsx
+│  ├─ settings-view.tsx
+│  ├─ review-sheet.tsx
+│  ├─ account-row.tsx
+│  ├─ bottom-nav.tsx
+│  └─ icons.tsx
+└─ features/
+   └─ instagram-data/
+      ├─ parser.ts
+      ├─ compare.ts
+      ├─ storage.ts
+      └─ types.ts
 ```
 
-The feature layer owns Instagram export parsing and relationship comparison. UI components remain presentation-focused so a later persistence adapter can be introduced without rewriting the interface.
+The relationship domain stays separate from the UI so persistence can later move to IndexedDB without rewriting the interface.
 
 ## Run locally
 
@@ -41,9 +59,7 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:3000`.
-
-## Validation
+## Validate
 
 ```bash
 npm run typecheck
@@ -51,16 +67,13 @@ npm run lint
 npm run build
 ```
 
-## Roadmap
+## Next milestones
 
-1. Implement Instagram export ZIP/JSON import.
-2. Normalize follower/following formats across export versions.
-3. Build native-feeling Following and Cleanup lists.
-4. Add Keep List stored locally.
-5. Add account review bottom sheet and Instagram deep links.
-6. Add import history and local data reset.
-7. Polish accessibility, motion and PWA install experience.
-8. Add optional official Meta OAuth only where the official API provides useful supported capabilities.
+1. IndexedDB persistence for very large exports.
+2. Reviewed-account state and optional review history.
+3. Import preview and export-version diagnostics.
+4. PWA install/offline polish.
+5. E2E tests for import, filters, Keep List, and review sheet.
 
 ## Disclaimer
 
