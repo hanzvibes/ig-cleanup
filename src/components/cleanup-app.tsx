@@ -49,12 +49,16 @@ export function CleanupApp() {
   const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    const snapshot = loadSnapshot();
-    if (snapshot) {
-      setData(snapshot.data);
-      setImportedAt(snapshot.importedAt);
-    }
-    setKeep(loadKeepList());
+    const frame = window.requestAnimationFrame(() => {
+      const snapshot = loadSnapshot();
+      if (snapshot) {
+        setData(snapshot.data);
+        setImportedAt(snapshot.importedAt);
+      }
+      setKeep(loadKeepList());
+    });
+
+    return () => window.cancelAnimationFrame(frame);
   }, []);
 
   useEffect(() => {
