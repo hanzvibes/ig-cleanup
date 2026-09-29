@@ -49,16 +49,24 @@ export function CleanupApp() {
   const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+
     const frame = window.requestAnimationFrame(() => {
-      const snapshot = loadSnapshot();
-      if (snapshot) {
-        setData(snapshot.data);
-        setImportedAt(snapshot.importedAt);
-      }
-      setKeep(loadKeepList());
+      void loadSnapshot().then((snapshot) => {
+        if (cancelled) return;
+
+        if (snapshot) {
+          setData(snapshot.data);
+          setImportedAt(snapshot.importedAt);
+        }
+        setKeep(loadKeepList());
+      });
     });
 
-    return () => window.cancelAnimationFrame(frame);
+    return () => {
+      cancelled = true;
+      window.cancelAnimationFrame(frame);
+    };
   }, []);
 
   useEffect(() => {
@@ -131,7 +139,7 @@ export function CleanupApp() {
       const stamp = new Date().toISOString();
       setData(parsed);
       setImportedAt(stamp);
-      const saved = saveSnapshot({ data: parsed, importedAt: stamp });
+      const saved = await saveSnapshot({ data: parsed, importedAt: stamp });
       setMessage(
         saved
           ? "Import complete. Data stays on this device."
@@ -158,7 +166,7 @@ export function CleanupApp() {
   };
 
   const resetData = () => {
-    clearSnapshot();
+    void clearSnapshot();
     setData(null);
     setImportedAt(null);
     setSelected(null);

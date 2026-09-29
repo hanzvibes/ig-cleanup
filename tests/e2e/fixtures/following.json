@@ -1,0 +1,34 @@
+{
+  "relationships_following": [
+    {
+      "title": "alice",
+      "string_list_data": [
+        {
+          "href": "https://www.instagram.com/alice/",
+          "value": "alice",
+          "timestamp": 1780000010
+        }
+      ]
+    },
+    {
+      "title": "charlie",
+      "string_list_data": [
+        {
+          "href": "https://www.instagram.com/charlie/",
+          "value": "charlie",
+          "timestamp": 1780000011
+        }
+      ]
+    },
+    {
+      "title": "dana",
+      "string_list_data": [
+        {
+          "href": "https://www.instagram.com/dana/",
+          "value": "dana",
+          "timestamp": 1780000012
+        }
+      ]
+    }
+  ]
+}
