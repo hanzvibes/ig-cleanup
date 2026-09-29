@@ -1,0 +1,56 @@
+:root {
+  color-scheme: light dark;
+  --bg: #fff;
+  --text: #0b0b0b;
+  --muted: #737373;
+  --line: #efefef;
+  --soft: #f7f7f7;
+  --button: #0b0b0b;
+  --buttonText: #fff;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--text); }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+button { font: inherit; color: inherit; }
+
+.appShell { width: min(100%, 520px); min-height: 100svh; margin: 0 auto; padding: env(safe-area-inset-top) 16px calc(92px + env(safe-area-inset-bottom)); background: var(--bg); }
+.topBar { height: 74px; display: flex; align-items: center; justify-content: space-between; }
+.eyebrow { display: block; margin-bottom: 3px; color: var(--muted); font-size: 12px; font-weight: 650; letter-spacing: .02em; }
+h1 { margin: 0; font-size: 24px; line-height: 1.05; letter-spacing: -.04em; }
+.avatarButton { width: 36px; height: 36px; border: 0; border-radius: 50%; background: var(--text); color: var(--bg); font-weight: 750; }
+
+.stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; padding: 20px 0 18px; border-top: 1px solid var(--line); }
+.stats div { display: flex; flex-direction: column; gap: 3px; }
+.stats strong { font-size: 19px; letter-spacing: -.025em; }
+.stats span { color: var(--muted); font-size: 12px; }
+
+.importCard { width: 100%; display: grid; grid-template-columns: 42px 1fr 24px; align-items: center; gap: 12px; padding: 14px; border: 0; border-radius: 14px; background: var(--soft); text-align: left; }
+.importIcon { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 50%; background: var(--text); color: var(--bg); font-size: 22px; }
+.importText { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.importText strong { font-size: 14px; }
+.importText small { color: var(--muted); font-size: 12px; line-height: 1.35; }
+.chevron { width: 18px; color: var(--muted); }
+
+.sectionHeader { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; padding: 30px 0 10px; }
+.sectionHeader h2 { margin: 0 0 4px; font-size: 16px; letter-spacing: -.02em; }
+.sectionHeader p { margin: 0; color: var(--muted); font-size: 12px; }
+.sectionHeader button { border: 0; background: transparent; font-size: 12px; font-weight: 700; }
+
+.accountList { border-top: 1px solid var(--line); }
+.accountRow { display: grid; grid-template-columns: 46px 1fr auto; align-items: center; gap: 11px; min-height: 74px; border-bottom: 1px solid var(--line); }
+.avatar { width: 46px; height: 46px; display: grid; place-items: center; border-radius: 50%; background: var(--soft); font-size: 12px; font-weight: 700; }
+.accountCopy { min-width: 0; display: flex; flex-direction: column; }
+.accountCopy strong { overflow: hidden; text-overflow: ellipsis; font-size: 13px; white-space: nowrap; }
+.accountCopy span, .accountCopy small { overflow: hidden; color: var(--muted); text-overflow: ellipsis; font-size: 12px; line-height: 1.35; white-space: nowrap; }
+.rowAction { min-width: 72px; padding: 7px 12px; border: 0; border-radius: 8px; background: var(--soft); font-size: 12px; font-weight: 700; }
+.disclaimer { margin: 24px 10px; color: var(--muted); font-size: 11px; line-height: 1.45; text-align: center; }
+
+.bottomNav { position: fixed; z-index: 10; left: 50%; bottom: max(10px, env(safe-area-inset-bottom)); width: min(calc(100% - 24px), 496px); height: 58px; display: grid; grid-template-columns: repeat(5,1fr); transform: translateX(-50%); border: 1px solid var(--line); border-radius: 18px; background: color-mix(in srgb, var(--bg) 94%, transparent); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); }
+.navButton { position: relative; display: grid; place-items: center; border: 0; background: transparent; }
+.navButton svg { width: 23px; height: 23px; }
+.navButtonActive::after { content: ""; position: absolute; bottom: 6px; width: 4px; height: 4px; border-radius: 50%; background: var(--text); }
+
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #000; --text: #f5f5f5; --muted: #a8a8a8; --line: #262626; --soft: #121212; --button: #fff; --buttonText: #000; }
+}
