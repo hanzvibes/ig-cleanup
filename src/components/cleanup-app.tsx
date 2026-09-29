@@ -9,6 +9,7 @@ import {
   summarizeRelationships,
 } from "@/features/instagram-data/compare";
 import { parseInstagramFiles } from "@/features/instagram-data/parser";
+import type { ImportProgress } from "@/features/instagram-data/parser";
 import {
   clearReviewedList,
   clearSnapshot,
@@ -21,6 +22,7 @@ import {
 } from "@/features/instagram-data/storage";
 import type { InstagramAccount, InstagramRelationshipData } from "@/features/instagram-data/types";
 
+import { AppSkeleton } from "./app-skeleton";
 import { BottomNav } from "./bottom-nav";
 import type { AppView } from "./bottom-nav";
 import { HomeView } from "./home-view";
@@ -39,6 +41,20 @@ const viewTitles: Record<AppView, { eyebrow: string; title: string }> = {
   profile: { eyebrow: "Local data", title: "Settings" },
 };
 
+const progressPercent = (progress: ImportProgress) => {
+  if (progress.stage === "opening") {
+    return Math.round((progress.current / Math.max(progress.total, 1)) * 20);
+  }
+  if (progress.stage === "reading") {
+    return 20 + Math.round((progress.current / Math.max(progress.total, 1)) * 70);
+  }
+  return 96;
+};
+
+const haptic = () => {
+  if ("vibrate" in navigator) navigator.vibrate(8);
+};
+
 export function CleanupApp() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [view, setView] = useState<AppView>("home");
@@ -50,23 +66,29 @@ export function CleanupApp() {
   const [query, setQuery] = useState("");
   const [followingFilter, setFollowingFilter] = useState<FollowingFilter>("all");
   const [cleanupFilter, setCleanupFilter] = useState<CleanupFilter>("pending");
+  const [hydrating, setHydrating] = useState(true);
   const [importing, setImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState<ImportProgress | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
     const frame = window.requestAnimationFrame(() => {
-      void loadSnapshot().then((snapshot) => {
-        if (cancelled) return;
+      void loadSnapshot()
+        .then((snapshot) => {
+          if (cancelled) return;
 
-        if (snapshot) {
-          setData(snapshot.data);
-          setImportedAt(snapshot.importedAt);
-        }
-        setKeep(loadKeepList());
-        setReviewed(loadReviewedList());
-      });
+          if (snapshot) {
+            setData(snapshot.data);
+            setImportedAt(snapshot.importedAt);
+          }
+          setKeep(loadKeepList());
+          setReviewed(loadReviewedList());
+        })
+        .finally(() => {
+          if (!cancelled) setHydrating(false);
+        });
     });
 
     return () => {
@@ -86,12 +108,18 @@ export function CleanupApp() {
   useEffect(() => {
     if (!selected) return;
 
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") setSelected(null);
     };
 
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
   }, [selected]);
 
   const safeData = data ?? EMPTY;
@@ -149,6 +177,7 @@ export function CleanupApp() {
   }, [baseList, query]);
 
   const switchView = (next: AppView) => {
+    if (importing) return;
     setView(next);
     setQuery("");
     setMessage(null);
@@ -160,11 +189,24 @@ export function CleanupApp() {
     if (!files?.length) return;
 
     setImporting(true);
+    setImportProgress({
+      stage: "opening",
+      current: 0,
+      total: files.length,
+      label: "Preparing Instagram export",
+    });
     setMessage(null);
 
     try {
-      const parsed = await parseInstagramFiles(files);
+      const parsed = await parseInstagramFiles(files, setImportProgress);
       const stamp = new Date().toISOString();
+
+      setImportProgress({
+        stage: "finalizing",
+        current: 1,
+        total: 1,
+        label: "Saving locally on this device",
+      });
 
       setData(parsed);
       setImportedAt(stamp);
@@ -176,9 +218,11 @@ export function CleanupApp() {
           : "Import complete for this session. Browser storage is full or unavailable.",
       );
       setView("home");
+      haptic();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Could not read this Instagram export.");
     } finally {
+      setImportProgress(null);
       setImporting(false);
       event.target.value = "";
     }
@@ -194,6 +238,7 @@ export function CleanupApp() {
       saveKeepList(next);
       return next;
     });
+    haptic();
   };
 
   const toggleReviewed = (username: string) => {
@@ -206,6 +251,7 @@ export function CleanupApp() {
       saveReviewedList(next);
       return next;
     });
+    haptic();
   };
 
   const resetReviewed = () => {
@@ -223,7 +269,10 @@ export function CleanupApp() {
     setView("home");
   };
 
-  const openImporter = () => fileInputRef.current?.click();
+  const openImporter = () => {
+    if (!importing) fileInputRef.current?.click();
+  };
+
   const hasData = Boolean(data);
   const title = viewTitles[view];
   const selectedKey = selected ? normalizeUsername(selected.username) : "";
@@ -232,7 +281,7 @@ export function CleanupApp() {
   const selectedFollowsYou = selected ? followerSet.has(selectedKey) : false;
 
   return (
-    <main className="appShell">
+    <main className="appShell" aria-busy={hydrating || importing}>
       <input
         ref={fileInputRef}
         className="visuallyHidden"
@@ -252,62 +301,81 @@ export function CleanupApp() {
           type="button"
           aria-label="Open settings"
           onClick={() => switchView("profile")}
+          disabled={importing}
         >
           IG
         </button>
       </header>
 
-      {message ? <div className="notice" role="status">{message}</div> : null}
-
-      {view === "home" ? (
-        <HomeView
-          hasData={hasData}
-          importing={importing}
-          summary={summary}
-          reviewCount={reviewAccounts.length}
-          reviewedCount={reviewedAccounts.length}
-          accounts={reviewAccounts.slice(0, 6)}
-          followerSet={followerSet}
-          onImport={openImporter}
-          onReview={setSelected}
-          onSeeAll={() => switchView("cleanup")}
-          keep={keep}
-        />
+      {importProgress ? (
+        <section className="importProgress" role="status" aria-live="polite">
+          <div className="importProgressCopy">
+            <strong>{importProgress.label}</strong>
+            <span>{progressPercent(importProgress)}%</span>
+          </div>
+          <div className="importProgressTrack" aria-hidden="true">
+            <span style={{ width: progressPercent(importProgress) + "%" }} />
+          </div>
+        </section>
+      ) : message ? (
+        <div className="notice" role="status">{message}</div>
       ) : null}
 
-      {view === "following" || view === "cleanup" || view === "keep" ? (
-        <ListView
-          view={view}
-          hasData={hasData}
-          query={query}
-          onQuery={setQuery}
-          accounts={visibleList}
-          total={baseList.length}
-          followerSet={followerSet}
-          keep={keep}
-          reviewed={reviewed}
-          onReview={setSelected}
-          onImport={openImporter}
-          followingFilter={followingFilter}
-          onFollowingFilter={setFollowingFilter}
-          cleanupFilter={cleanupFilter}
-          onCleanupFilter={setCleanupFilter}
-        />
-      ) : null}
+      {hydrating ? (
+        <AppSkeleton />
+      ) : (
+        <>
+          {view === "home" ? (
+            <HomeView
+              hasData={hasData}
+              importing={importing}
+              summary={summary}
+              reviewCount={reviewAccounts.length}
+              reviewedCount={reviewedAccounts.length}
+              accounts={reviewAccounts.slice(0, 6)}
+              followerSet={followerSet}
+              onImport={openImporter}
+              onReview={setSelected}
+              onSeeAll={() => switchView("cleanup")}
+              keep={keep}
+            />
+          ) : null}
 
-      {view === "profile" ? (
-        <SettingsView
-          hasData={hasData}
-          summary={summary}
-          importedAt={importedAt}
-          keepCount={keep.size}
-          reviewedCount={reviewedAccounts.length}
-          importing={importing}
-          onImport={openImporter}
-          onReset={resetData}
-          onClearReviewed={resetReviewed}
-        />
-      ) : null}
+          {view === "following" || view === "cleanup" || view === "keep" ? (
+            <ListView
+              view={view}
+              hasData={hasData}
+              query={query}
+              onQuery={setQuery}
+              accounts={visibleList}
+              total={baseList.length}
+              followerSet={followerSet}
+              keep={keep}
+              reviewed={reviewed}
+              onReview={setSelected}
+              onImport={openImporter}
+              followingFilter={followingFilter}
+              onFollowingFilter={setFollowingFilter}
+              cleanupFilter={cleanupFilter}
+              onCleanupFilter={setCleanupFilter}
+            />
+          ) : null}
+
+          {view === "profile" ? (
+            <SettingsView
+              hasData={hasData}
+              summary={summary}
+              importedAt={importedAt}
+              keepCount={keep.size}
+              reviewedCount={reviewedAccounts.length}
+              importing={importing}
+              onImport={openImporter}
+              onReset={resetData}
+              onClearReviewed={resetReviewed}
+            />
+          ) : null}
+        </>
+      )}
 
       <BottomNav active={view} onChange={switchView} />
 

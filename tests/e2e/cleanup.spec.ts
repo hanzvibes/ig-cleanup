@@ -47,7 +47,17 @@ test("imports, filters, keeps, reviews, and persists cleanup progress", async ({
   );
   await dialog.getByRole("button", { name: "Add to Keep list" }).click();
   await expect(dialog.getByRole("button", { name: "Remove from Keep list" })).toBeVisible();
-  await dialog.getByRole("button", { name: "Close" }).click();
+
+  const dragZone = dialog.getByTestId("sheet-drag-zone");
+  const dragBox = await dragZone.boundingBox();
+  expect(dragBox).not.toBeNull();
+  if (!dragBox) throw new Error("Drag zone was not measurable");
+
+  await page.mouse.move(dragBox.x + dragBox.width / 2, dragBox.y + dragBox.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(dragBox.x + dragBox.width / 2, dragBox.y + 150, { steps: 5 });
+  await page.mouse.up();
+  await expect(dialog).toHaveCount(0);
 
   const danaRow = page.locator(".accountRow").filter({ hasText: "dana" });
   await danaRow.getByRole("button", { name: "Review dana" }).click();

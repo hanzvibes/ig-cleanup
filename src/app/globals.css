@@ -31,6 +31,33 @@ button:disabled { cursor: default; opacity: .55; }
 
 .notice { margin: 4px 0 10px; padding: 9px 11px; border-radius: 8px; background: var(--soft); color: var(--muted); font-size: 11px; line-height: 1.4; }
 
+.importProgress { margin: 4px 0 12px; }
+.importProgressCopy { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 7px; }
+.importProgressCopy strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: 11px; white-space: nowrap; }
+.importProgressCopy span { flex: 0 0 auto; color: var(--muted); font-size: 10px; font-variant-numeric: tabular-nums; }
+.importProgressTrack { height: 3px; overflow: hidden; border-radius: 99px; background: var(--soft); }
+.importProgressTrack span { display: block; height: 100%; border-radius: inherit; background: var(--blue); transition: width 180ms ease-out; }
+
+.appSkeleton { padding: 14px 0 10px; pointer-events: none; }
+.skeletonProfile { display: grid; grid-template-columns: 74px 1fr; align-items: center; gap: 16px; padding: 8px 0 20px; }
+.skeletonCircle, .skeletonLine, .skeletonNumber, .skeletonButton, .skeletonPanel { position: relative; overflow: hidden; background: var(--soft); }
+.skeletonCircle::after, .skeletonLine::after, .skeletonNumber::after, .skeletonButton::after, .skeletonPanel::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--text) 5%, transparent), transparent); animation: skeletonSweep 1.25s infinite; }
+.skeletonCircle { width: 72px; height: 72px; border-radius: 50%; }
+.skeletonCircleSmall { width: 44px; height: 44px; }
+.skeletonStats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.skeletonStats span { display: block; height: 28px; border-radius: 8px; background: var(--soft); }
+.skeletonLine { display: block; height: 10px; border-radius: 99px; }
+.skeletonLineWide { width: 78%; margin: 4px 0 10px; }
+.skeletonLineMedium { width: 58%; }
+.skeletonLineSmall { width: 30%; }
+.skeletonLineRow { width: 62%; }
+.skeletonPanel { min-height: 112px; margin: 22px -16px 18px; padding: 18px 16px; border-top: 1px solid var(--line-soft); border-bottom: 1px solid var(--line-soft); background: transparent; }
+.skeletonPanel > * { position: relative; z-index: 1; }
+.skeletonNumber { display: block; width: 54px; height: 28px; margin: 14px 0 8px; border-radius: 8px; }
+.skeletonRows { display: grid; }
+.skeletonRow { min-height: 64px; display: grid; grid-template-columns: 44px 1fr 78px; align-items: center; gap: 10px; }
+.skeletonButton { width: 78px; height: 30px; border-radius: 7px; }
+
 .emptyState { min-height: calc(100svh - 150px); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px 20px 64px; text-align: center; }
 .emptyGlyph { width: 76px; height: 76px; display: grid; place-items: center; margin-bottom: 22px; border: 2px solid var(--text); border-radius: 50%; }
 .emptyGlyph svg { width: 31px; height: 31px; }
@@ -127,9 +154,11 @@ button:disabled { cursor: default; opacity: .55; }
 .navButtonActive svg { stroke-width: 2.35; }
 
 .sheetBackdrop { position: fixed; z-index: 100; inset: 0; display: flex; align-items: flex-end; justify-content: center; background: rgb(0 0 0 / .38); animation: fadeIn 160ms ease-out; }
-.reviewSheet { position: relative; width: min(100%, 520px); padding: 18px 16px calc(18px + env(safe-area-inset-bottom)); border-radius: 18px 18px 0 0; background: var(--surface); text-align: center; animation: sheetUp 210ms cubic-bezier(.2,.75,.25,1); }
-.sheetHandle { position: absolute; top: 7px; left: 50%; width: 36px; height: 4px; transform: translateX(-50%); border-radius: 99px; background: var(--line); }
-.sheetClose { position: absolute; top: 13px; right: 12px; width: 34px; height: 34px; display: grid; place-items: center; border: 0; border-radius: 50%; background: var(--soft); }
+.reviewSheet { position: relative; width: min(100%, 520px); padding: 18px 16px calc(18px + env(safe-area-inset-bottom)); border-radius: 18px 18px 0 0; background: var(--surface); text-align: center; will-change: translate; animation: sheetUp 210ms cubic-bezier(.2,.75,.25,1); }
+.sheetDragZone { position: absolute; z-index: 1; top: 0; left: 0; right: 0; height: 30px; display: flex; align-items: flex-start; justify-content: center; padding-top: 7px; touch-action: none; cursor: grab; user-select: none; }
+.sheetDragZone:active { cursor: grabbing; }
+.sheetHandle { width: 36px; height: 4px; border-radius: 99px; background: var(--line); }
+.sheetClose { position: absolute; z-index: 2; top: 13px; right: 12px; width: 34px; height: 34px; display: grid; place-items: center; border: 0; border-radius: 50%; background: var(--soft); }
 .sheetClose svg { width: 17px; }
 .sheetAvatar { width: 72px; height: 72px; display: grid; place-items: center; margin: 21px auto 11px; border-radius: 50%; background: var(--soft); font-size: 16px; font-weight: 800; }
 .reviewSheet h2 { margin: 0; font-size: 17px; letter-spacing: -.025em; }
@@ -142,6 +171,7 @@ button:disabled { cursor: default; opacity: .55; }
 
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes sheetUp { from { transform: translateY(24px); opacity: .72; } to { transform: translateY(0); opacity: 1; } }
+@keyframes skeletonSweep { 100% { transform: translateX(100%); } }
 
 @media (min-width: 700px) {
   .appShell { border-left: 1px solid var(--line-soft); border-right: 1px solid var(--line-soft); }

@@ -11,6 +11,20 @@ type RawEntry = {
   timestamp?: unknown;
 };
 
+export type ImportProgress = {
+  stage: "opening" | "reading" | "finalizing";
+  current: number;
+  total: number;
+  label: string;
+};
+
+type ImportProgressHandler = (progress: ImportProgress) => void;
+
+type TextTask = {
+  name: string;
+  read: () => Promise<string>;
+};
+
 const fileBaseName = (name: string) => name.split("/").pop()?.toLowerCase() ?? "";
 
 const classifyFile = (name: string): "followers" | "following" | null => {
@@ -128,33 +142,70 @@ const parseNamedText = (name: string, text: string): PartialRelationshipData => 
   return {};
 };
 
-const parseZip = async (file: File): Promise<InstagramRelationshipData> => {
-  const zip = await JSZip.loadAsync(file);
-  const result: InstagramRelationshipData = { followers: [], following: [] };
+const buildTasks = async (
+  files: File[],
+  onProgress?: ImportProgressHandler,
+): Promise<TextTask[]> => {
+  const tasks: TextTask[] = [];
 
-  for (const entry of Object.values(zip.files)) {
-    if (entry.dir || !classifyFile(entry.name)) continue;
-    const text = await entry.async("text");
-    merge(result, parseNamedText(entry.name, text));
+  for (let index = 0; index < files.length; index += 1) {
+    const file = files[index];
+
+    onProgress?.({
+      stage: "opening",
+      current: index + 1,
+      total: files.length,
+      label: "Opening " + file.name,
+    });
+
+    if (file.name.toLowerCase().endsWith(".zip")) {
+      const zip = await JSZip.loadAsync(file);
+      for (const entry of Object.values(zip.files)) {
+        if (entry.dir || !classifyFile(entry.name)) continue;
+        tasks.push({
+          name: entry.name,
+          read: () => entry.async("text"),
+        });
+      }
+      continue;
+    }
+
+    tasks.push({
+      name: file.name,
+      read: () => file.text(),
+    });
   }
 
-  return result;
+  return tasks;
 };
 
 export async function parseInstagramFiles(
   files: File[] | FileList,
+  onProgress?: ImportProgressHandler,
 ): Promise<InstagramRelationshipData> {
+  const selectedFiles = Array.from(files);
+  const tasks = await buildTasks(selectedFiles, onProgress);
   const result: InstagramRelationshipData = { followers: [], following: [] };
 
-  for (const file of Array.from(files)) {
-    if (file.name.toLowerCase().endsWith(".zip")) {
-      merge(result, await parseZip(file));
-      continue;
-    }
+  for (let index = 0; index < tasks.length; index += 1) {
+    const task = tasks[index];
 
-    const text = await file.text();
-    merge(result, parseNamedText(file.name, text));
+    onProgress?.({
+      stage: "reading",
+      current: index + 1,
+      total: tasks.length,
+      label: "Reading " + fileBaseName(task.name),
+    });
+
+    merge(result, parseNamedText(task.name, await task.read()));
   }
+
+  onProgress?.({
+    stage: "finalizing",
+    current: tasks.length,
+    total: tasks.length,
+    label: "Comparing followers and following",
+  });
 
   const normalized = normalizeRelationshipData(result);
   if (normalized.followers.length === 0 && normalized.following.length === 0) {

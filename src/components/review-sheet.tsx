@@ -1,3 +1,8 @@
+"use client";
+
+import { useRef, useState } from "react";
+import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
+
 import type { InstagramAccount } from "@/features/instagram-data/types";
 
 import { BookmarkIcon, CheckIcon, CloseIcon, ExternalIcon } from "./icons";
@@ -12,6 +17,8 @@ type ReviewSheetProps = {
   onToggleReviewed: (username: string) => void;
 };
 
+const CLOSE_THRESHOLD = 96;
+
 export function ReviewSheet({
   account,
   followsYou,
@@ -21,18 +28,71 @@ export function ReviewSheet({
   onToggleKeep,
   onToggleReviewed,
 }: ReviewSheetProps) {
+  const dragStartY = useRef(0);
+  const dragOffsetRef = useRef(0);
+  const activePointer = useRef<number | null>(null);
+  const [dragOffset, setDragOffset] = useState(0);
+  const [dragging, setDragging] = useState(false);
+
   const profileUrl = "https://www.instagram.com/" + encodeURIComponent(account.username) + "/";
 
+  const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    activePointer.current = event.pointerId;
+    dragStartY.current = event.clientY;
+    dragOffsetRef.current = 0;
+    setDragging(true);
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const handlePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (activePointer.current !== event.pointerId) return;
+    const nextOffset = Math.max(0, Math.min(360, event.clientY - dragStartY.current));
+    dragOffsetRef.current = nextOffset;
+    setDragOffset(nextOffset);
+  };
+
+  const finishDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (activePointer.current !== event.pointerId) return;
+
+    activePointer.current = null;
+    setDragging(false);
+
+    if (dragOffsetRef.current >= CLOSE_THRESHOLD) {
+      onClose();
+      return;
+    }
+
+    dragOffsetRef.current = 0;
+    setDragOffset(0);
+  };
+
+  const sheetStyle: CSSProperties = {
+    translate: `0 ${dragOffset}px`,
+    transition: dragging ? "none" : "translate 180ms cubic-bezier(.2,.75,.25,1)",
+  };
+
   return (
-    <div className="sheetBackdrop" role="presentation" onMouseDown={onClose}>
+    <div className="sheetBackdrop" role="presentation" onPointerDown={onClose}>
       <section
         className="reviewSheet"
         role="dialog"
         aria-modal="true"
         aria-label={"Review " + account.username}
-        onMouseDown={(event) => event.stopPropagation()}
+        style={sheetStyle}
+        onPointerDown={(event) => event.stopPropagation()}
       >
-        <div className="sheetHandle" />
+        <div
+          className="sheetDragZone"
+          data-testid="sheet-drag-zone"
+          aria-label="Drag to close"
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={finishDrag}
+          onPointerCancel={finishDrag}
+        >
+          <div className="sheetHandle" />
+        </div>
+
         <button className="sheetClose" type="button" onClick={onClose} aria-label="Close">
           <CloseIcon />
         </button>
@@ -55,7 +115,7 @@ export function ReviewSheet({
         </button>
 
         <p className="sheetNote">
-          Unfollow decisions stay in Instagram. Mark Reviewed after you finish checking the account.
+          Unfollow decisions stay in Instagram. Swipe this sheet down to close when you are done.
         </p>
       </section>
     </div>
