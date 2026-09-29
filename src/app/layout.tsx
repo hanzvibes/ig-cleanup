@@ -3,8 +3,16 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "IG Cleanup",
-  description: "Review your Instagram following data with a local-first workflow.",
+  description: "Review your Instagram following data with a private local-first workflow.",
   applicationName: "IG Cleanup",
+  formatDetection: {
+    telephone: false,
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "IG Cleanup",
+  },
 };
 
 export const viewport: Viewport = {

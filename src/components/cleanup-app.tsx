@@ -10,10 +10,13 @@ import {
 } from "@/features/instagram-data/compare";
 import { parseInstagramFiles } from "@/features/instagram-data/parser";
 import {
+  clearReviewedList,
   clearSnapshot,
   loadKeepList,
+  loadReviewedList,
   loadSnapshot,
   saveKeepList,
+  saveReviewedList,
   saveSnapshot,
 } from "@/features/instagram-data/storage";
 import type { InstagramAccount, InstagramRelationshipData } from "@/features/instagram-data/types";
@@ -22,17 +25,17 @@ import { BottomNav } from "./bottom-nav";
 import type { AppView } from "./bottom-nav";
 import { HomeView } from "./home-view";
 import { ListView } from "./list-view";
-import type { FollowingFilter } from "./list-view";
+import type { CleanupFilter, FollowingFilter } from "./list-view";
 import { ReviewSheet } from "./review-sheet";
 import { SettingsView } from "./settings-view";
 
 const EMPTY: InstagramRelationshipData = { followers: [], following: [] };
 
 const viewTitles: Record<AppView, { eyebrow: string; title: string }> = {
-  home: { eyebrow: "IG Cleanup", title: "Your activity" },
+  home: { eyebrow: "Private local review", title: "IG Cleanup" },
   following: { eyebrow: "Connections", title: "Following" },
-  cleanup: { eyebrow: "Review queue", title: "Not following back" },
-  keep: { eyebrow: "Protected", title: "Keep list" },
+  cleanup: { eyebrow: "Cleanup", title: "Not following back" },
+  keep: { eyebrow: "Protected accounts", title: "Keep" },
   profile: { eyebrow: "Local data", title: "Settings" },
 };
 
@@ -42,9 +45,11 @@ export function CleanupApp() {
   const [data, setData] = useState<InstagramRelationshipData | null>(null);
   const [importedAt, setImportedAt] = useState<string | null>(null);
   const [keep, setKeep] = useState<Set<string>>(new Set());
+  const [reviewed, setReviewed] = useState<Set<string>>(new Set());
   const [selected, setSelected] = useState<InstagramAccount | null>(null);
   const [query, setQuery] = useState("");
   const [followingFilter, setFollowingFilter] = useState<FollowingFilter>("all");
+  const [cleanupFilter, setCleanupFilter] = useState<CleanupFilter>("pending");
   const [importing, setImporting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -60,6 +65,7 @@ export function CleanupApp() {
           setImportedAt(snapshot.importedAt);
         }
         setKeep(loadKeepList());
+        setReviewed(loadReviewedList());
       });
     });
 
@@ -70,10 +76,20 @@ export function CleanupApp() {
   }, []);
 
   useEffect(() => {
+    if (!("serviceWorker" in navigator) || process.env.NODE_ENV !== "production") return;
+
+    void navigator.serviceWorker.register("/sw.js").catch(() => {
+      // Offline support is progressive enhancement; app usage should never depend on it.
+    });
+  }, []);
+
+  useEffect(() => {
     if (!selected) return;
+
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") setSelected(null);
     };
+
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [selected]);
@@ -81,19 +97,30 @@ export function CleanupApp() {
   const safeData = data ?? EMPTY;
   const summary = useMemo(() => summarizeRelationships(safeData), [safeData]);
   const buckets = useMemo(() => buildRelationshipBuckets(safeData), [safeData]);
+
   const followerSet = useMemo(
     () => new Set(safeData.followers.map((item) => normalizeUsername(item.username))),
     [safeData.followers],
   );
 
   const reviewAccounts = useMemo(
-    () => buckets.notFollowingBack.filter((account) => !keep.has(normalizeUsername(account.username))),
-    [buckets.notFollowingBack, keep],
+    () =>
+      buckets.notFollowingBack.filter((account) => {
+        const key = normalizeUsername(account.username);
+        return !keep.has(key) && !reviewed.has(key);
+      }),
+    [buckets.notFollowingBack, keep, reviewed],
+  );
+
+  const reviewedAccounts = useMemo(
+    () => buckets.notFollowingBack.filter((account) => reviewed.has(normalizeUsername(account.username))),
+    [buckets.notFollowingBack, reviewed],
   );
 
   const keepAccounts = useMemo(() => {
     const all = [...safeData.following, ...safeData.followers];
     const seen = new Set<string>();
+
     return all.filter((account) => {
       const key = normalizeUsername(account.username);
       if (!keep.has(key) || seen.has(key)) return false;
@@ -110,10 +137,10 @@ export function CleanupApp() {
 
   const baseList = useMemo(() => {
     if (view === "following") return filteredFollowing;
-    if (view === "cleanup") return reviewAccounts;
+    if (view === "cleanup") return cleanupFilter === "reviewed" ? reviewedAccounts : reviewAccounts;
     if (view === "keep") return keepAccounts;
     return [];
-  }, [filteredFollowing, keepAccounts, reviewAccounts, view]);
+  }, [cleanupFilter, filteredFollowing, keepAccounts, reviewAccounts, reviewedAccounts, view]);
 
   const visibleList = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -134,11 +161,14 @@ export function CleanupApp() {
 
     setImporting(true);
     setMessage(null);
+
     try {
       const parsed = await parseInstagramFiles(files);
       const stamp = new Date().toISOString();
+
       setData(parsed);
       setImportedAt(stamp);
+
       const saved = await saveSnapshot({ data: parsed, importedAt: stamp });
       setMessage(
         saved
@@ -156,6 +186,7 @@ export function CleanupApp() {
 
   const toggleKeep = (username: string) => {
     const key = normalizeUsername(username);
+
     setKeep((current) => {
       const next = new Set(current);
       if (next.has(key)) next.delete(key);
@@ -163,6 +194,24 @@ export function CleanupApp() {
       saveKeepList(next);
       return next;
     });
+  };
+
+  const toggleReviewed = (username: string) => {
+    const key = normalizeUsername(username);
+
+    setReviewed((current) => {
+      const next = new Set(current);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      saveReviewedList(next);
+      return next;
+    });
+  };
+
+  const resetReviewed = () => {
+    clearReviewedList();
+    setReviewed(new Set());
+    setMessage("Reviewed history was reset.");
   };
 
   const resetData = () => {
@@ -179,6 +228,7 @@ export function CleanupApp() {
   const title = viewTitles[view];
   const selectedKey = selected ? normalizeUsername(selected.username) : "";
   const selectedKept = selected ? keep.has(selectedKey) : false;
+  const selectedReviewed = selected ? reviewed.has(selectedKey) : false;
   const selectedFollowsYou = selected ? followerSet.has(selectedKey) : false;
 
   return (
@@ -194,8 +244,8 @@ export function CleanupApp() {
 
       <header className="topBar">
         <div>
-          <span className="eyebrow">{title.eyebrow}</span>
           <h1>{title.title}</h1>
+          <span className="eyebrow">{title.eyebrow}</span>
         </div>
         <button
           className="avatarButton"
@@ -215,6 +265,7 @@ export function CleanupApp() {
           importing={importing}
           summary={summary}
           reviewCount={reviewAccounts.length}
+          reviewedCount={reviewedAccounts.length}
           accounts={reviewAccounts.slice(0, 6)}
           followerSet={followerSet}
           onImport={openImporter}
@@ -234,10 +285,13 @@ export function CleanupApp() {
           total={baseList.length}
           followerSet={followerSet}
           keep={keep}
+          reviewed={reviewed}
           onReview={setSelected}
           onImport={openImporter}
           followingFilter={followingFilter}
           onFollowingFilter={setFollowingFilter}
+          cleanupFilter={cleanupFilter}
+          onCleanupFilter={setCleanupFilter}
         />
       ) : null}
 
@@ -247,9 +301,11 @@ export function CleanupApp() {
           summary={summary}
           importedAt={importedAt}
           keepCount={keep.size}
+          reviewedCount={reviewedAccounts.length}
           importing={importing}
           onImport={openImporter}
           onReset={resetData}
+          onClearReviewed={resetReviewed}
         />
       ) : null}
 
@@ -260,8 +316,10 @@ export function CleanupApp() {
           account={selected}
           followsYou={selectedFollowsYou}
           kept={selectedKept}
+          reviewed={selectedReviewed}
           onClose={() => setSelected(null)}
           onToggleKeep={toggleKeep}
+          onToggleReviewed={toggleReviewed}
         />
       ) : null}
     </main>

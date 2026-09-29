@@ -1,15 +1,17 @@
 import type { RelationshipSummary } from "@/features/instagram-data/types";
 
-import { TrashIcon, UploadIcon } from "./icons";
+import { CheckIcon, TrashIcon, UploadIcon } from "./icons";
 
 type SettingsViewProps = {
   hasData: boolean;
   summary: RelationshipSummary;
   importedAt: string | null;
   keepCount: number;
+  reviewedCount: number;
   importing: boolean;
   onImport: () => void;
   onReset: () => void;
+  onClearReviewed: () => void;
 };
 
 const formatCount = (value: number) => new Intl.NumberFormat().format(value);
@@ -19,9 +21,11 @@ export function SettingsView({
   summary,
   importedAt,
   keepCount,
+  reviewedCount,
   importing,
   onImport,
   onReset,
+  onClearReviewed,
 }: SettingsViewProps) {
   let importDescription = "ZIP, JSON, or HTML export";
   if (importing) importDescription = "Reading export…";
@@ -49,13 +53,27 @@ export function SettingsView({
         <div className="settingsStat"><span>Following</span><strong>{formatCount(summary.following)}</strong></div>
         <div className="settingsStat"><span>Followers</span><strong>{formatCount(summary.followers)}</strong></div>
         <div className="settingsStat"><span>Keep list</span><strong>{formatCount(keepCount)}</strong></div>
+        <div className="settingsStat"><span>Reviewed</span><strong>{formatCount(reviewedCount)}</strong></div>
       </div>
+
+      {reviewedCount > 0 ? (
+        <div className="settingsGroup">
+          <span className="settingsLabel">Cleanup progress</span>
+          <button type="button" onClick={onClearReviewed}>
+            <span>
+              <strong>Reset reviewed history</strong>
+              <small>Return reviewed accounts to the queue</small>
+            </span>
+            <CheckIcon />
+          </button>
+        </div>
+      ) : null}
 
       <div className="settingsGroup">
         <span className="settingsLabel">Privacy</span>
         <div className="settingsCopy">
           <strong>Processed on this device</strong>
-          <p>Your export is parsed in the browser. The baseline app has no server upload for this relationship data.</p>
+          <p>Your export is parsed locally. Relationship data is not uploaded to an app server.</p>
         </div>
       </div>
 

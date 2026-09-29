@@ -9,6 +9,7 @@ type HomeViewProps = {
   importing: boolean;
   summary: RelationshipSummary;
   reviewCount: number;
+  reviewedCount: number;
   accounts: InstagramAccount[];
   followerSet: Set<string>;
   onImport: () => void;
@@ -27,6 +28,7 @@ export function HomeView({
   importing,
   summary,
   reviewCount,
+  reviewedCount,
   accounts,
   followerSet,
   onImport,
@@ -72,11 +74,24 @@ export function HomeView({
         <span className="importRowMeta">Local</span>
       </button>
 
-      <section className="metricCard">
-        <span className="metricLabel">Review queue</span>
-        <strong>{formatCount(reviewCount)}</strong>
-        <p>accounts you follow that do not appear in your followers export and are not protected in Keep.</p>
-        <button type="button" onClick={onSeeAll}>Review accounts</button>
+      <section className="cleanupPanel">
+        <div className="cleanupPanelHead">
+          <div>
+            <strong>Cleanup</strong>
+            <span>Accounts that do not follow you back</span>
+          </div>
+          <button type="button" onClick={onSeeAll}>Open</button>
+        </div>
+        <div className="cleanupStats">
+          <div>
+            <strong data-testid="pending-count">{formatCount(reviewCount)}</strong>
+            <span>To review</span>
+          </div>
+          <div>
+            <strong data-testid="reviewed-count">{formatCount(reviewedCount)}</strong>
+            <span>Reviewed</span>
+          </div>
+        </div>
       </section>
 
       <section className="sectionHeader">
@@ -99,7 +114,7 @@ export function HomeView({
         )) : (
           <div className="listEmpty">
             <strong>Queue cleared</strong>
-            <span>Everything here is either mutual or protected in Keep.</span>
+            <span>Everything here is mutual, protected in Keep, or already reviewed.</span>
           </div>
         )}
       </section>

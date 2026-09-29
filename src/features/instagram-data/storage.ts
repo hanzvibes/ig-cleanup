@@ -6,6 +6,7 @@ const SNAPSHOT_STORE = "snapshots";
 const SNAPSHOT_ID = "latest";
 const LEGACY_SNAPSHOT_KEY = "ig-cleanup:snapshot:v1";
 const KEEP_KEY = "ig-cleanup:keep:v1";
+const REVIEWED_KEY = "ig-cleanup:reviewed:v1";
 
 const canUseIndexedDb = () =>
   typeof window !== "undefined" && "indexedDB" in window;
@@ -113,6 +114,24 @@ const deleteIndexedSnapshot = async () => {
   });
 };
 
+const loadStringSet = (key: string): Set<string> => {
+  try {
+    const raw = window.localStorage.getItem(key);
+    const list = raw ? (JSON.parse(raw) as string[]) : [];
+    return new Set(list);
+  } catch {
+    return new Set();
+  }
+};
+
+const saveStringSet = (key: string, values: Set<string>) => {
+  try {
+    window.localStorage.setItem(key, JSON.stringify(Array.from(values)));
+  } catch {
+    // Preserve the current in-memory state if browser storage is unavailable.
+  }
+};
+
 export async function loadSnapshot(): Promise<StoredSnapshot | null> {
   if (!canUseIndexedDb()) return loadLegacySnapshot();
 
@@ -158,19 +177,25 @@ export async function clearSnapshot(): Promise<void> {
 }
 
 export function loadKeepList(): Set<string> {
-  try {
-    const raw = window.localStorage.getItem(KEEP_KEY);
-    const list = raw ? (JSON.parse(raw) as string[]) : [];
-    return new Set(list);
-  } catch {
-    return new Set();
-  }
+  return loadStringSet(KEEP_KEY);
 }
 
 export function saveKeepList(keep: Set<string>) {
+  saveStringSet(KEEP_KEY, keep);
+}
+
+export function loadReviewedList(): Set<string> {
+  return loadStringSet(REVIEWED_KEY);
+}
+
+export function saveReviewedList(reviewed: Set<string>) {
+  saveStringSet(REVIEWED_KEY, reviewed);
+}
+
+export function clearReviewedList() {
   try {
-    window.localStorage.setItem(KEEP_KEY, JSON.stringify(Array.from(keep)));
+    window.localStorage.removeItem(REVIEWED_KEY);
   } catch {
-    // Keep the current in-memory state when browser storage is unavailable.
+    // In-memory state still resets.
   }
 }

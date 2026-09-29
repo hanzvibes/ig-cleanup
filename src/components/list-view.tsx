@@ -5,6 +5,7 @@ import { AccountRow } from "./account-row";
 import { CloseIcon, SearchIcon, UploadIcon } from "./icons";
 
 export type FollowingFilter = "all" | "not-back" | "mutual";
+export type CleanupFilter = "pending" | "reviewed";
 
 type ListViewProps = {
   view: "following" | "cleanup" | "keep";
@@ -15,10 +16,13 @@ type ListViewProps = {
   total: number;
   followerSet: Set<string>;
   keep: Set<string>;
+  reviewed: Set<string>;
   onReview: (account: InstagramAccount) => void;
   onImport: () => void;
   followingFilter: FollowingFilter;
   onFollowingFilter: (filter: FollowingFilter) => void;
+  cleanupFilter: CleanupFilter;
+  onCleanupFilter: (filter: CleanupFilter) => void;
 };
 
 const formatCount = (value: number) => new Intl.NumberFormat().format(value);
@@ -35,10 +39,13 @@ export function ListView({
   total,
   followerSet,
   keep,
+  reviewed,
   onReview,
   onImport,
   followingFilter,
   onFollowingFilter,
+  cleanupFilter,
+  onCleanupFilter,
 }: ListViewProps) {
   if (!hasData) {
     return (
@@ -71,45 +78,42 @@ export function ListView({
 
       {view === "following" ? (
         <div className="filterTabs" role="tablist" aria-label="Following filters">
-          <button
-            className={followingFilter === "all" ? "filterTab filterTabActive" : "filterTab"}
-            type="button"
-            onClick={() => onFollowingFilter("all")}
-          >
-            All
-          </button>
-          <button
-            className={followingFilter === "not-back" ? "filterTab filterTabActive" : "filterTab"}
-            type="button"
-            onClick={() => onFollowingFilter("not-back")}
-          >
-            Not back
-          </button>
-          <button
-            className={followingFilter === "mutual" ? "filterTab filterTabActive" : "filterTab"}
-            type="button"
-            onClick={() => onFollowingFilter("mutual")}
-          >
-            Mutual
-          </button>
+          <button className={followingFilter === "all" ? "filterTab filterTabActive" : "filterTab"} type="button" onClick={() => onFollowingFilter("all")}>All</button>
+          <button className={followingFilter === "not-back" ? "filterTab filterTabActive" : "filterTab"} type="button" onClick={() => onFollowingFilter("not-back")}>Not back</button>
+          <button className={followingFilter === "mutual" ? "filterTab filterTabActive" : "filterTab"} type="button" onClick={() => onFollowingFilter("mutual")}>Mutual</button>
+        </div>
+      ) : null}
+
+      {view === "cleanup" ? (
+        <div className="filterTabs" role="tablist" aria-label="Cleanup filters">
+          <button className={cleanupFilter === "pending" ? "filterTab filterTabActive" : "filterTab"} type="button" onClick={() => onCleanupFilter("pending")}>To review</button>
+          <button className={cleanupFilter === "reviewed" ? "filterTab filterTabActive" : "filterTab"} type="button" onClick={() => onCleanupFilter("reviewed")}>Reviewed</button>
         </div>
       ) : null}
 
       <div className="listMeta">
         <strong>{formatCount(total)}</strong>
-        <span>{view === "cleanup" ? "to review" : view === "keep" ? "protected" : "accounts"}</span>
+        <span>
+          {view === "cleanup"
+            ? cleanupFilter === "reviewed" ? "reviewed" : "to review"
+            : view === "keep" ? "protected" : "accounts"}
+        </span>
       </div>
 
       <section className="accountList">
-        {accounts.length ? accounts.map((account) => (
-          <AccountRow
-            key={account.username}
-            account={account}
-            status={statusFor(account, followerSet)}
-            kept={keep.has(normalizeUsername(account.username))}
-            onReview={onReview}
-          />
-        )) : (
+        {accounts.length ? accounts.map((account) => {
+          const key = normalizeUsername(account.username);
+          return (
+            <AccountRow
+              key={account.username}
+              account={account}
+              status={statusFor(account, followerSet)}
+              kept={keep.has(key)}
+              reviewed={reviewed.has(key)}
+              onReview={onReview}
+            />
+          );
+        }) : (
           <div className="listEmpty">
             <strong>No accounts found</strong>
             <span>
@@ -117,7 +121,9 @@ export function ListView({
                 ? "Try another username."
                 : view === "keep"
                   ? "Add accounts to Keep from any review sheet."
-                  : "There is nothing in this list yet."}
+                  : view === "cleanup" && cleanupFilter === "reviewed"
+                    ? "Accounts you mark Reviewed will appear here."
+                    : "There is nothing in this list yet."}
             </span>
           </div>
         )}

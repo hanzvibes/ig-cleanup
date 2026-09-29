@@ -33,3 +33,6 @@ export function ExternalIcon(props: IconProps) {
 export function TrashIcon(props: IconProps) {
   return <svg {...base} {...props}><path d="M4 7h16M9 7V4h6v3m-9 0 1 13h10l1-13" /><path d="M10 11v5M14 11v5" /></svg>;
 }
+export function CheckIcon(props: IconProps) {
+  return <svg {...base} {...props}><path d="m5 12 4.2 4.2L19 6.5" /></svg>;
+}
