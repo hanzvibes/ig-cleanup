@@ -18,6 +18,18 @@ export function BookmarkIcon(props: IconProps) {
 export function UserIcon(props: IconProps) {
   return <svg {...base} {...props}><circle cx="12" cy="8" r="4" /><path d="M4.5 21a7.5 7.5 0 0 1 15 0" /></svg>;
 }
-export function ChevronIcon(props: IconProps) {
-  return <svg {...base} {...props}><path d="m9 18 6-6-6-6" /></svg>;
+export function MoreIcon(props: IconProps) {
+  return <svg {...base} {...props}><circle cx="5" cy="12" r=".7" fill="currentColor" stroke="none" /><circle cx="12" cy="12" r=".7" fill="currentColor" stroke="none" /><circle cx="19" cy="12" r=".7" fill="currentColor" stroke="none" /></svg>;
+}
+export function CloseIcon(props: IconProps) {
+  return <svg {...base} {...props}><path d="m6 6 12 12M18 6 6 18" /></svg>;
+}
+export function UploadIcon(props: IconProps) {
+  return <svg {...base} {...props}><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5" /><path d="M5 14v5h14v-5" /></svg>;
+}
+export function ExternalIcon(props: IconProps) {
+  return <svg {...base} {...props}><path d="M14 4h6v6M20 4l-9 9" /><path d="M18 13v6H5V6h6" /></svg>;
+}
+export function TrashIcon(props: IconProps) {
+  return <svg {...base} {...props}><path d="M4 7h16M9 7V4h6v3m-9 0 1 13h10l1-13" /><path d="M10 11v5M14 11v5" /></svg>;
 }

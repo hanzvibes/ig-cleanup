@@ -1,6 +1,7 @@
 export type InstagramAccount = {
   username: string;
   href?: string;
+  timestamp?: number;
 };
 
 export type InstagramRelationshipData = {
@@ -14,4 +15,15 @@ export type RelationshipSummary = {
   mutual: number;
   notFollowingBack: number;
   youDoNotFollowBack: number;
+};
+
+export type RelationshipBuckets = {
+  mutual: InstagramAccount[];
+  notFollowingBack: InstagramAccount[];
+  youDoNotFollowBack: InstagramAccount[];
+};
+
+export type StoredSnapshot = {
+  data: InstagramRelationshipData;
+  importedAt: string;
 };
