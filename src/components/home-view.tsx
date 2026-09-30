@@ -1,5 +1,10 @@
 import { normalizeUsername } from "@/features/instagram-data/compare";
-import type { InstagramAccount, RelationshipSummary } from "@/features/instagram-data/types";
+import type {
+  ImportHistoryEntry,
+  InstagramAccount,
+  RelationshipSummary,
+  SessionSummary,
+} from "@/features/instagram-data/types";
 
 import { AccountRow } from "./account-row";
 import { UploadIcon } from "./icons";
@@ -18,6 +23,8 @@ type HomeViewProps = {
   keep: Set<string>;
   sessionProgress: { position: number; total: number } | null;
   onStartSession: () => void;
+  lastImport: ImportHistoryEntry | null;
+  lastSessionSummary: SessionSummary | null;
 };
 
 const formatCount = (value: number) => new Intl.NumberFormat().format(value);
@@ -39,6 +46,8 @@ export function HomeView({
   keep,
   sessionProgress,
   onStartSession,
+  lastImport,
+  lastSessionSummary,
 }: HomeViewProps) {
   if (!hasData) {
     return (
@@ -49,14 +58,14 @@ export function HomeView({
         <button className="primaryButton" type="button" onClick={onImport} disabled={importing}>
           {importing ? "Reading export…" : "Import Instagram data"}
         </button>
-        <div className="privacyStrip">
-          <span>Private by default</span>
-          <span>•</span>
-          <span>No password needed</span>
-        </div>
+        <div className="privacyStrip"><span>Private by default</span><span>•</span><span>No password needed</span></div>
       </section>
     );
   }
+
+  const changeTotal = lastImport
+    ? Object.values(lastImport.changes).reduce((sum, value) => sum + value, 0)
+    : 0;
 
   return (
     <>
@@ -71,52 +80,52 @@ export function HomeView({
 
       <button className="importRow" type="button" onClick={onImport}>
         <span className="importRowIcon"><UploadIcon /></span>
-        <span>
-          <strong>Update Instagram data</strong>
-          <small>Re-import anytime for a fresh comparison</small>
-        </span>
+        <span><strong>Update Instagram data</strong><small>Smart compare before replacing your local snapshot</small></span>
         <span className="importRowMeta">Local</span>
       </button>
 
+      {lastImport?.previousImportedAt ? (
+        <section className="changeCard" data-testid="last-import-changes">
+          <div><strong>{changeTotal}</strong><span>changes since last import</span></div>
+          <div className="changeChips">
+            <span>+{lastImport.changes.newFollowers} followers</span>
+            <span>-{lastImport.changes.lostFollowers} followers</span>
+            <span>+{lastImport.changes.newFollowing} following</span>
+            <span>-{lastImport.changes.removedFollowing} following</span>
+          </div>
+        </section>
+      ) : null}
+
       <section className="cleanupPanel">
         <div className="cleanupPanelHead">
-          <div>
-            <strong>Cleanup</strong>
-            <span>Accounts that do not follow you back</span>
-          </div>
+          <div><strong>Cleanup</strong><span>Accounts that do not follow you back</span></div>
           <button type="button" onClick={onSeeAll}>Open</button>
         </div>
         <div className="cleanupStats">
-          <div>
-            <strong data-testid="pending-count">{formatCount(reviewCount)}</strong>
-            <span>To review</span>
-          </div>
-          <div>
-            <strong data-testid="reviewed-count">{formatCount(reviewedCount)}</strong>
-            <span>Reviewed</span>
-          </div>
+          <div><strong data-testid="pending-count">{formatCount(reviewCount)}</strong><span>To review</span></div>
+          <div><strong data-testid="reviewed-count">{formatCount(reviewedCount)}</strong><span>Reviewed</span></div>
         </div>
 
         {reviewCount > 0 ? (
           <button className="sessionHomeButton" type="button" onClick={onStartSession}>
             <span>
               <strong>{sessionProgress ? "Resume review session" : "Start review session"}</strong>
-              <small>
-                {sessionProgress
-                  ? `Continue ${sessionProgress.position} / ${sessionProgress.total}`
-                  : `Review ${formatCount(reviewCount)} accounts one by one`}
-              </small>
+              <small>{sessionProgress ? `Continue ${sessionProgress.position} / ${sessionProgress.total}` : `Review ${formatCount(reviewCount)} accounts one by one`}</small>
             </span>
             <b>{sessionProgress ? "Resume" : "Start"}</b>
           </button>
         ) : null}
       </section>
 
+      {lastSessionSummary ? (
+        <section className="sessionSummaryCard" data-testid="last-session-summary">
+          <strong>Last review session</strong>
+          <span>{lastSessionSummary.reviewed} reviewed · {lastSessionSummary.kept} kept · {lastSessionSummary.skipped} skipped</span>
+        </section>
+      ) : null}
+
       <section className="sectionHeader">
-        <div>
-          <h2>Suggested to review</h2>
-          <p>Keep important accounts out of your cleanup queue.</p>
-        </div>
+        <div><h2>Suggested to review</h2><p>Keep important accounts out of your cleanup queue.</p></div>
         <button type="button" onClick={onSeeAll}>See all</button>
       </section>
 
@@ -130,10 +139,7 @@ export function HomeView({
             onReview={onReview}
           />
         )) : (
-          <div className="listEmpty">
-            <strong>Queue cleared</strong>
-            <span>Everything here is mutual, protected in Keep, or already reviewed.</span>
-          </div>
+          <div className="listEmpty"><strong>Queue cleared</strong><span>Everything here is mutual, protected in Keep, or already reviewed.</span></div>
         )}
       </section>
     </>

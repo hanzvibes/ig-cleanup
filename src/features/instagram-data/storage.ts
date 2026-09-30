@@ -1,4 +1,9 @@
-import type { ReviewSession, StoredSnapshot } from "./types";
+import type {
+  ImportHistoryEntry,
+  ReviewSession,
+  SessionSummary,
+  StoredSnapshot,
+} from "./types";
 
 const DB_NAME = "ig-cleanup";
 const DB_VERSION = 1;
@@ -8,6 +13,10 @@ const LEGACY_SNAPSHOT_KEY = "ig-cleanup:snapshot:v1";
 const KEEP_KEY = "ig-cleanup:keep:v1";
 const REVIEWED_KEY = "ig-cleanup:reviewed:v1";
 const SESSION_KEY = "ig-cleanup:review-session:v1";
+const IMPORT_HISTORY_KEY = "ig-cleanup:import-history:v1";
+const LAST_SESSION_KEY = "ig-cleanup:last-session:v1";
+const DATA_VERSION_KEY = "ig-cleanup:data-version";
+const CURRENT_DATA_VERSION = 2;
 
 const canUseIndexedDb = () =>
   typeof window !== "undefined" && "indexedDB" in window;
@@ -115,23 +124,36 @@ const deleteIndexedSnapshot = async () => {
   });
 };
 
-const loadStringSet = (key: string): Set<string> => {
+const loadJson = <T>(key: string, fallback: T): T => {
   try {
     const raw = window.localStorage.getItem(key);
-    const list = raw ? (JSON.parse(raw) as string[]) : [];
-    return new Set(list);
+    return raw ? (JSON.parse(raw) as T) : fallback;
   } catch {
-    return new Set();
+    return fallback;
   }
 };
 
-const saveStringSet = (key: string, values: Set<string>) => {
+const saveJson = (key: string, value: unknown) => {
   try {
-    window.localStorage.setItem(key, JSON.stringify(Array.from(values)));
+    window.localStorage.setItem(key, JSON.stringify(value));
   } catch {
-    // Preserve the current in-memory state if browser storage is unavailable.
+    // Keep in-memory state if storage is unavailable.
   }
 };
+
+const removeLocal = (key: string) => {
+  try {
+    window.localStorage.removeItem(key);
+  } catch {
+    // In-memory state can still reset.
+  }
+};
+
+const loadStringSet = (key: string): Set<string> =>
+  new Set(loadJson<string[]>(key, []));
+
+const saveStringSet = (key: string, values: Set<string>) =>
+  saveJson(key, Array.from(values));
 
 export async function loadSnapshot(): Promise<StoredSnapshot | null> {
   if (!canUseIndexedDb()) return loadLegacySnapshot();
@@ -167,7 +189,6 @@ export async function saveSnapshot(snapshot: StoredSnapshot): Promise<boolean> {
 
 export async function clearSnapshot(): Promise<void> {
   clearLegacySnapshot();
-
   if (!canUseIndexedDb()) return;
 
   try {
@@ -185,6 +206,10 @@ export function saveKeepList(keep: Set<string>) {
   saveStringSet(KEEP_KEY, keep);
 }
 
+export function clearKeepList() {
+  removeLocal(KEEP_KEY);
+}
+
 export function loadReviewedList(): Set<string> {
   return loadStringSet(REVIEWED_KEY);
 }
@@ -194,34 +219,75 @@ export function saveReviewedList(reviewed: Set<string>) {
 }
 
 export function clearReviewedList() {
-  try {
-    window.localStorage.removeItem(REVIEWED_KEY);
-  } catch {
-    // In-memory state still resets.
-  }
+  removeLocal(REVIEWED_KEY);
 }
 
 export function loadReviewSession(): ReviewSession | null {
-  try {
-    const raw = window.localStorage.getItem(SESSION_KEY);
-    return raw ? (JSON.parse(raw) as ReviewSession) : null;
-  } catch {
-    return null;
-  }
+  return loadJson<ReviewSession | null>(SESSION_KEY, null);
 }
 
 export function saveReviewSession(session: ReviewSession) {
-  try {
-    window.localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-  } catch {
-    // Session resume is optional when storage is unavailable.
-  }
+  saveJson(SESSION_KEY, session);
 }
 
 export function clearReviewSession() {
+  removeLocal(SESSION_KEY);
+}
+
+export function loadImportHistory(): ImportHistoryEntry[] {
+  return loadJson<ImportHistoryEntry[]>(IMPORT_HISTORY_KEY, []);
+}
+
+export function saveImportHistory(history: ImportHistoryEntry[]) {
+  saveJson(IMPORT_HISTORY_KEY, history.slice(0, 20));
+}
+
+export function clearImportHistory() {
+  removeLocal(IMPORT_HISTORY_KEY);
+}
+
+export function loadLastSessionSummary(): SessionSummary | null {
+  return loadJson<SessionSummary | null>(LAST_SESSION_KEY, null);
+}
+
+export function saveLastSessionSummary(summary: SessionSummary) {
+  saveJson(LAST_SESSION_KEY, summary);
+}
+
+export function clearLastSessionSummary() {
+  removeLocal(LAST_SESSION_KEY);
+}
+
+export async function clearAllLocalState() {
+  await clearSnapshot();
+  [
+    KEEP_KEY,
+    REVIEWED_KEY,
+    SESSION_KEY,
+    IMPORT_HISTORY_KEY,
+    LAST_SESSION_KEY,
+    LEGACY_SNAPSHOT_KEY,
+    DATA_VERSION_KEY,
+  ].forEach(removeLocal);
+}
+
+export function migrateLocalState() {
   try {
-    window.localStorage.removeItem(SESSION_KEY);
+    const version = Number(window.localStorage.getItem(DATA_VERSION_KEY) ?? "1");
+    if (version < 2) {
+      const session = loadReviewSession();
+      if (session) {
+        saveReviewSession({
+          ...session,
+          history: session.history ?? [],
+          skipped: session.skipped ?? [],
+          reviewedCount: session.reviewedCount ?? 0,
+          keptCount: session.keptCount ?? 0,
+        });
+      }
+    }
+    window.localStorage.setItem(DATA_VERSION_KEY, String(CURRENT_DATA_VERSION));
   } catch {
-    // In-memory state still resets.
+    // Migration is best-effort; existing data remains readable.
   }
 }

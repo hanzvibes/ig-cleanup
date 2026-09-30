@@ -36,4 +36,57 @@ export type ReviewSession = {
   total: number;
   sort: SortOption;
   startedAt: string;
+  history?: string[];
+  skipped?: string[];
+  reviewedCount?: number;
+  keptCount?: number;
+};
+
+export type SessionSummary = {
+  finishedAt: string;
+  total: number;
+  reviewed: number;
+  kept: number;
+  skipped: number;
+};
+
+export type ImportDiagnostics = {
+  filesScanned: number;
+  relationshipFiles: number;
+  duplicatesIgnored: number;
+  invalidEntriesIgnored: number;
+  malformedFiles: string[];
+};
+
+export type RelationshipDiff = {
+  newFollowers: string[];
+  lostFollowers: string[];
+  newFollowing: string[];
+  removedFollowing: string[];
+};
+
+export type ImportHistoryEntry = {
+  id: string;
+  importedAt: string;
+  previousImportedAt?: string;
+  followers: number;
+  following: number;
+  changes: {
+    newFollowers: number;
+    lostFollowers: number;
+    newFollowing: number;
+    removedFollowing: number;
+  };
+  diagnostics: ImportDiagnostics;
+};
+
+export type AppBackupV1 = {
+  version: 1;
+  exportedAt: string;
+  snapshot: StoredSnapshot | null;
+  keep: string[];
+  reviewed: string[];
+  importHistory: ImportHistoryEntry[];
+  reviewSession: ReviewSession | null;
+  lastSessionSummary: SessionSummary | null;
 };

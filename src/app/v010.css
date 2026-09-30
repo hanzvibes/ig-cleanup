@@ -1,0 +1,50 @@
+.changeCard,
+.sessionSummaryCard {
+  margin: 12px 0 2px;
+  padding: 12px;
+  border: 1px solid var(--line-soft);
+  border-radius: 10px;
+  background: var(--surface);
+}
+.changeCard > div:first-child { display: flex; align-items: baseline; gap: 6px; }
+.changeCard > div:first-child strong { font-size: 21px; letter-spacing: -.035em; }
+.changeCard > div:first-child span,
+.sessionSummaryCard span { color: var(--muted); font-size: 10px; }
+.changeChips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 9px; }
+.changeChips span { padding: 5px 7px; border-radius: 99px; background: var(--soft); color: var(--muted); font-size: 9px; }
+.sessionSummaryCard { display: flex; flex-direction: column; gap: 4px; }
+.sessionSummaryCard strong { font-size: 11px; }
+
+.importPreviewSheet { padding-top: 32px; }
+.previewEyebrow { color: var(--blue); font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
+.previewGrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; margin: 16px 0 10px; text-align: left; }
+.previewGrid > div { display: flex; flex-direction: column; gap: 2px; padding: 10px; border-radius: 9px; background: var(--soft); }
+.previewGrid strong { font-size: 17px; }
+.previewGrid span { color: var(--muted); font-size: 9px; }
+.previewTotals { display: flex; justify-content: center; gap: 14px; color: var(--muted); font-size: 10px; }
+.diagnosticLine { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 10px; margin: 12px 0 16px; color: var(--faint); font-size: 9px; }
+
+.confirmSheet { padding-top: 44px; }
+.confirmDescription { max-width: 390px; margin: 9px auto 20px; color: var(--muted); font-size: 11px; line-height: 1.5; }
+.confirmDanger { width: 100%; min-height: 42px; border: 0; border-radius: 8px; background: var(--danger); color: #fff; font-size: 12px; font-weight: 750; }
+
+.sessionProgressTrack { width: 118px; height: 3px; margin: 9px auto 2px; overflow: hidden; border-radius: 99px; background: var(--soft); }
+.sessionProgressTrack span { display: block; height: 100%; border-radius: inherit; background: var(--blue); transition: width 180ms ease-out; }
+.sessionNavGrid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 7px; margin-top: 8px; }
+.sessionNavGrid button { min-height: 38px; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: var(--text); font-size: 10px; font-weight: 700; }
+.sessionNavGrid button:nth-child(2) { background: var(--soft); border-color: transparent; }
+.sessionNavGrid button:disabled { opacity: .35; }
+.undoAction { width: 100%; min-height: 36px; margin-top: 8px; border: 0; background: transparent; color: var(--blue); font-size: 10px; font-weight: 750; }
+.undoToast { position: fixed; z-index: 45; left: 50%; bottom: calc(62px + env(safe-area-inset-bottom)); width: min(calc(100% - 24px), 496px); min-height: 42px; display: flex; align-items: center; justify-content: space-between; gap: 12px; transform: translateX(-50%); padding: 0 10px 0 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); box-shadow: 0 6px 20px rgb(0 0 0 / .12); }
+.undoToast span { color: var(--muted); font-size: 10px; }
+.undoToast button { border: 0; background: transparent; color: var(--blue); font-size: 10px; font-weight: 800; }
+
+.settingsGroup > button + button { border-top: 1px solid var(--line-soft); }
+.privacyDetails { padding: 0 0 13px; color: var(--muted); font-size: 10px; }
+.privacyDetails summary { cursor: pointer; color: var(--text); font-weight: 700; }
+.privacyDetails p { margin: 7px 0 0; line-height: 1.5; }
+.dangerButtonStrong { margin-top: 8px; border-color: color-mix(in srgb, var(--danger) 55%, var(--line)); }
+
+@media (prefers-reduced-motion: reduce) {
+  .sessionProgressTrack span { transition: none; }
+}

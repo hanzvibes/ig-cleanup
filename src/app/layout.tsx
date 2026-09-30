@@ -1,14 +1,13 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import "./session.css";
+import "./v010.css";
 
 export const metadata: Metadata = {
   title: "IG Cleanup",
   description: "Review your Instagram following data with a private local-first workflow.",
   applicationName: "IG Cleanup",
-  formatDetection: {
-    telephone: false,
-  },
+  formatDetection: { telephone: false },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -27,9 +26,5 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return (
-    <html lang="en">
-      <body>{children}</body>
-    </html>
-  );
+  return <html lang="en"><body>{children}</body></html>;
 }
