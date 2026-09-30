@@ -3,6 +3,8 @@ import "./globals.css";
 import "./session.css";
 import "./v010.css";
 
+import { ServiceWorkerUpdater } from "@/components/service-worker-updater";
+
 export const metadata: Metadata = {
   title: "IG Cleanup",
   description: "Review your Instagram following data with a private local-first workflow.",
@@ -26,5 +28,12 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="en"><body>{children}</body></html>;
+  return (
+    <html lang="en">
+      <body>
+        <ServiceWorkerUpdater />
+        {children}
+      </body>
+    </html>
+  );
 }

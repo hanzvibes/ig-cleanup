@@ -143,11 +143,18 @@ test("exports, resets, and restores a versioned local backup", async ({ page }) 
   await expect(page.locator(".accountRow").filter({ hasText: "charlie" })).toBeVisible();
 });
 
-test("publishes PWA manifest and offline worker", async ({ request }) => {
+test("publishes a fresh PWA worker and exposes the running app version", async ({ page, request }) => {
   const manifestResponse = await request.get("/manifest.webmanifest");
   expect(manifestResponse.ok()).toBeTruthy();
   const manifest = await manifestResponse.json();
   expect(manifest.display).toBe("standalone");
+
   const workerResponse = await request.get("/sw.js");
   expect(workerResponse.ok()).toBeTruthy();
+  expect(await workerResponse.text()).toContain("ig-cleanup-v0.10.1");
+  expect(workerResponse.headers()["cache-control"]).toContain("no-store");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Profile", exact: true }).click();
+  await expect(page.getByTestId("app-version")).toContainText("v0.10.1");
 });

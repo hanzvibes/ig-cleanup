@@ -1,4 +1,5 @@
 import type { RelationshipSummary } from "@/features/instagram-data/types";
+import { APP_VERSION } from "@/lib/app-version";
 
 import { CheckIcon, TrashIcon, UploadIcon } from "./icons";
 
@@ -47,7 +48,10 @@ export function SettingsView({
     <section className="settingsList">
       <div className="settingsHero">
         <div className="settingsAvatar">IG</div>
-        <div><strong>IG Cleanup</strong><span>Independent local-first utility</span></div>
+        <div>
+          <strong>IG Cleanup</strong>
+          <span data-testid="app-version">v{APP_VERSION} · Independent local-first utility</span>
+        </div>
       </div>
 
       <div className="settingsGroup">
