@@ -12,7 +12,9 @@ type ReviewSheetProps = {
   followsYou: boolean;
   kept: boolean;
   reviewed: boolean;
+  sessionProgress: { position: number; total: number } | null;
   onClose: () => void;
+  onNext?: () => void;
   onToggleKeep: (username: string) => void;
   onToggleReviewed: (username: string) => void;
 };
@@ -24,7 +26,9 @@ export function ReviewSheet({
   followsYou,
   kept,
   reviewed,
+  sessionProgress,
   onClose,
+  onNext,
   onToggleKeep,
   onToggleReviewed,
 }: ReviewSheetProps) {
@@ -97,6 +101,12 @@ export function ReviewSheet({
           <CloseIcon />
         </button>
 
+        {sessionProgress ? (
+          <div className="sessionProgressPill" data-testid="session-progress">
+            Session {sessionProgress.position} / {sessionProgress.total}
+          </div>
+        ) : null}
+
         <div className="sheetAvatar" aria-hidden="true">{account.username.slice(0, 2).toUpperCase()}</div>
         <h2>@{account.username}</h2>
         <p className="sheetStatus">
@@ -114,8 +124,14 @@ export function ReviewSheet({
           <BookmarkIcon aria-hidden="true" /> {kept ? "Remove from Keep list" : "Add to Keep list"}
         </button>
 
+        {sessionProgress && onNext ? (
+          <button className="sessionNextAction" type="button" onClick={onNext}>
+            Next account
+          </button>
+        ) : null}
+
         <p className="sheetNote">
-          Unfollow decisions stay in Instagram. Swipe this sheet down to close when you are done.
+          Unfollow decisions stay in Instagram. Session progress is stored only on this device.
         </p>
       </section>
     </div>

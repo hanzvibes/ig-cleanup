@@ -16,6 +16,8 @@ type HomeViewProps = {
   onReview: (account: InstagramAccount) => void;
   onSeeAll: () => void;
   keep: Set<string>;
+  sessionProgress: { position: number; total: number } | null;
+  onStartSession: () => void;
 };
 
 const formatCount = (value: number) => new Intl.NumberFormat().format(value);
@@ -35,6 +37,8 @@ export function HomeView({
   onReview,
   onSeeAll,
   keep,
+  sessionProgress,
+  onStartSession,
 }: HomeViewProps) {
   if (!hasData) {
     return (
@@ -92,6 +96,20 @@ export function HomeView({
             <span>Reviewed</span>
           </div>
         </div>
+
+        {reviewCount > 0 ? (
+          <button className="sessionHomeButton" type="button" onClick={onStartSession}>
+            <span>
+              <strong>{sessionProgress ? "Resume review session" : "Start review session"}</strong>
+              <small>
+                {sessionProgress
+                  ? `Continue ${sessionProgress.position} / ${sessionProgress.total}`
+                  : `Review ${formatCount(reviewCount)} accounts one by one`}
+              </small>
+            </span>
+            <b>{sessionProgress ? "Resume" : "Start"}</b>
+          </button>
+        ) : null}
       </section>
 
       <section className="sectionHeader">

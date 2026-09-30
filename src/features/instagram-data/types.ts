@@ -27,3 +27,13 @@ export type StoredSnapshot = {
   data: InstagramRelationshipData;
   importedAt: string;
 };
+
+export type SortOption = "az" | "za" | "newest" | "oldest";
+
+export type ReviewSession = {
+  currentUsername: string;
+  position: number;
+  total: number;
+  sort: SortOption;
+  startedAt: string;
+};

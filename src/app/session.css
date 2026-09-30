@@ -1,0 +1,132 @@
+.sessionHomeButton {
+  width: 100%;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 9px;
+  background: var(--soft);
+  text-align: left;
+}
+.sessionHomeButton > span { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.sessionHomeButton strong { font-size: 12px; }
+.sessionHomeButton small { overflow: hidden; color: var(--muted); text-overflow: ellipsis; font-size: 10px; white-space: nowrap; }
+.sessionHomeButton b { flex: 0 0 auto; color: var(--blue); font-size: 11px; }
+
+.sessionStrip {
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 2px 0 8px;
+  padding: 9px 11px;
+  border: 1px solid var(--line-soft);
+  border-radius: 10px;
+}
+.sessionStrip > div { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.sessionStrip strong { font-size: 11px; }
+.sessionStrip span { overflow: hidden; color: var(--muted); text-overflow: ellipsis; font-size: 10px; white-space: nowrap; }
+.sessionStrip > button { min-width: 58px; height: 30px; border: 0; border-radius: 7px; background: var(--text); color: var(--bg); font-size: 10px; font-weight: 700; }
+
+.listToolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 38px; }
+.listTools { display: flex; align-items: center; gap: 7px; }
+.sortControl select {
+  height: 30px;
+  max-width: 94px;
+  padding: 0 25px 0 9px;
+  border: 0;
+  border-radius: 7px;
+  outline: none;
+  background: var(--soft);
+  color: var(--text);
+  font-size: 10px;
+  font-weight: 650;
+}
+.textTool { height: 30px; padding: 0 9px; border: 0; border-radius: 7px; background: transparent; color: var(--blue); font-size: 10px; font-weight: 700; }
+.textToolActive { background: var(--soft); color: var(--text); }
+
+.accountRowSelected { background: color-mix(in srgb, var(--blue) 6%, transparent); }
+.selectCircle {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  justify-self: center;
+  border: 1.5px solid var(--line);
+  border-radius: 50%;
+  background: transparent;
+  color: #fff;
+}
+.selectCircle svg { width: 15px; height: 15px; }
+.selectCircleActive { border-color: var(--blue); background: var(--blue); }
+
+.batchBar {
+  position: fixed;
+  z-index: 35;
+  left: 50%;
+  bottom: calc(56px + env(safe-area-inset-bottom));
+  width: min(calc(100% - 20px), 500px);
+  min-height: 48px;
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 6px;
+  transform: translateX(-50%);
+  padding: 6px 7px 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface) 96%, transparent);
+  box-shadow: 0 6px 24px rgb(0 0 0 / .1);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+.batchBar > span { color: var(--muted); font-size: 10px; font-weight: 650; }
+.batchBar button {
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--soft);
+  font-size: 10px;
+  font-weight: 700;
+}
+.batchBar button:last-child { background: var(--text); color: var(--bg); }
+.batchBar button:disabled { opacity: .42; }
+.batchBar svg { width: 15px; height: 15px; }
+
+.sessionProgressPill {
+  width: fit-content;
+  margin: 20px auto -5px;
+  padding: 5px 8px;
+  border-radius: 99px;
+  background: var(--soft);
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.sessionNextAction {
+  width: 100%;
+  min-height: 42px;
+  margin-top: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+}
+.sessionNextAction:active { background: var(--soft); }
+
+@media (prefers-reduced-motion: reduce) {
+  .batchBar { backdrop-filter: none; -webkit-backdrop-filter: none; }
+}

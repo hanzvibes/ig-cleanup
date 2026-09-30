@@ -1,4 +1,4 @@
-import type { StoredSnapshot } from "./types";
+import type { ReviewSession, StoredSnapshot } from "./types";
 
 const DB_NAME = "ig-cleanup";
 const DB_VERSION = 1;
@@ -7,6 +7,7 @@ const SNAPSHOT_ID = "latest";
 const LEGACY_SNAPSHOT_KEY = "ig-cleanup:snapshot:v1";
 const KEEP_KEY = "ig-cleanup:keep:v1";
 const REVIEWED_KEY = "ig-cleanup:reviewed:v1";
+const SESSION_KEY = "ig-cleanup:review-session:v1";
 
 const canUseIndexedDb = () =>
   typeof window !== "undefined" && "indexedDB" in window;
@@ -195,6 +196,31 @@ export function saveReviewedList(reviewed: Set<string>) {
 export function clearReviewedList() {
   try {
     window.localStorage.removeItem(REVIEWED_KEY);
+  } catch {
+    // In-memory state still resets.
+  }
+}
+
+export function loadReviewSession(): ReviewSession | null {
+  try {
+    const raw = window.localStorage.getItem(SESSION_KEY);
+    return raw ? (JSON.parse(raw) as ReviewSession) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveReviewSession(session: ReviewSession) {
+  try {
+    window.localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  } catch {
+    // Session resume is optional when storage is unavailable.
+  }
+}
+
+export function clearReviewSession() {
+  try {
+    window.localStorage.removeItem(SESSION_KEY);
   } catch {
     // In-memory state still resets.
   }
